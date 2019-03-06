@@ -395,6 +395,10 @@ public class Pegasus extends Namespace {
      * TERM signal to a job indicating that is should create a checkpoint file.
      */
     public static final String  CHECKPOINT_TIME_KEY = "checkpoint.time";
+
+    public static final String  CHECKPOINT_STYLE_KEY = "checkpoint.style";
+    public static final String  CHECKPOINT_CONDOR_SIGNAL_KEY = "checkpoint.condor.signal";
+    public static final String  CHECKPOINT_CONDOR_ACTION_KEY = "checkpoint.condor.action";
     
     /**
      * Key indicating indicating time in seconds after which kickstart sends out a
@@ -647,6 +651,9 @@ public class Pegasus extends Namespace {
                     (key.compareTo( CLUSTER_ARGUMENTS) == 0 ) ||
                     (key.compareTo( CORES_KEY ) == 0 ) ||
                     (key.compareTo( Pegasus.CHECKPOINT_TIME_KEY) == 0 )||
+                    (key.compareTo( Pegasus.CHECKPOINT_STYLE_KEY) == 0 )||
+                    (key.compareTo( Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY) == 0 )||
+                    (key.compareTo( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY) == 0 )||
                     (key.compareTo( Pegasus.DEPRECATED_CHECKPOINT_TIME_KEY) == 0 )  ||
                     (key.compareTo( Pegasus.CONDOR_QUOTE_ARGUMENTS_KEY) == 0 )    ) {
                     res = VALID_KEY;
