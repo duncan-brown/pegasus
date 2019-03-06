@@ -468,7 +468,7 @@ int mysystem(AppInfo* appinfo, JobInfo* jobinfo) {
     }
 
     /* Pass signals on to child */
-    struct sigaction propagate, saveintr, saveterm, savequit;
+    struct sigaction propagate, saveintr, saveterm, savequit, savetstp, savecont;
     memset(&propagate, 0, sizeof(struct sigaction));
     propagate.sa_handler = propagate_signal;
     sigemptyset(&propagate.sa_mask);
@@ -480,6 +480,12 @@ int mysystem(AppInfo* appinfo, JobInfo* jobinfo) {
         return -1;
     }
     if (sigaction(SIGQUIT, &propagate, &savequit) < 0) {
+        return -1;
+    }
+    if (sigaction(SIGTSTP, &propagate, &savetstp) < 0) {
+        return -1;
+    }
+    if (sigaction(SIGCONT, &propagate, &savecont) < 0) {
         return -1;
     }
 
@@ -518,6 +524,8 @@ int mysystem(AppInfo* appinfo, JobInfo* jobinfo) {
         sigaction(SIGINT, &saveintr, NULL);
         sigaction(SIGTERM, &saveterm, NULL);
         sigaction(SIGQUIT, &savequit, NULL);
+        sigaction(SIGTSTP, &savetstp, NULL);
+        sigaction(SIGCONT, &savecont, NULL);
 
         /* If we are tracing, then hand over control to the proc module */
         if (appinfo->enableTracing) {
@@ -559,6 +567,8 @@ int mysystem(AppInfo* appinfo, JobInfo* jobinfo) {
     sigaction(SIGINT, &saveintr, NULL);
     sigaction(SIGTERM, &saveterm, NULL);
     sigaction(SIGQUIT, &savequit, NULL);
+    sigaction(SIGTSTP, &savetstp, NULL);
+    sigaction(SIGCONT, &savecont, NULL);
 
     /* Look for trace files from libinterpose and add trace data to jobinfo */
     if (appinfo->enableLibTrace) {
