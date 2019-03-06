@@ -53,17 +53,55 @@ public class None extends Abstract {
      */
     public String wrap( Job job ){
         StringBuilder sb = new StringBuilder();
-        
+        String ckpt_style = (String)job.vdsNS.get( Pegasus.CHECKPOINT_STYLE_KEY );
+
         sb.append( super.inputFilesToPegasusLite(job) );
         sb.append( super.enableForIntegrity(job) );
-        sb.append( "set +e" ).append( '\n' );//PM-701
-        sb.append( "job_ec=0" ).append( "\n" );
-        
-        appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Executing the user task" );
-        sb.append( job.getRemoteExecutable() ).append( job.getArguments() ).append( '\n' );
-        //capture exitcode of the job
-        sb.append( "job_ec=$?" ).append( "\n" );
-        sb.append( "set -e" ).append( '\n' );//PM-701
+
+        if style.equalsIgnoreCase( Pegasus.CONDOR_STYLE ) {
+            //condor vanilla universe checkpointing
+            String ckpt_signal = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY );
+            String ckpt_action = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY );
+
+            job.condorVariables.construct( "+WantCheckpointSignal", "true" );
+            job.condorVariables.construct( "+WantFTOnCheckpoint", "true" );
+            job.condorVariables.construct( "+CheckpointSig", ckpt_signal );
+
+            job.condorVariables.construct( "+CheckpointExitBySignal", "true" );
+            job.condorVariables.construct( "+SuccessCheckpointExitBySignal", "true" );
+            job.condorVariables.construct( "+CheckpointExitSignal", ckpt_signal );
+            job.condorVariables.construct( "+SuccessCheckpointExitSignal", ckpt_signal );
+
+            sb.append( "# Adding condor signal handler" ).append( '\n' );
+            if ckpt_action.style.equalsIgnoreCase( "wait_and_exit" ) {
+                sb.append( "# On signal wait and exit" ).append( '\n' );
+            } else if ckpt_action.style.equalsIgnoreCase( "stop_and_exit" ) {
+                sb.append( "# On signal stop and exit" ).append( '\n' );
+            } else {
+                StringBuilder error = new StringBuilder();
+                error.append( "Job " ).append( job.getID() ).
+                  append( " Invalid ").append( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY ).
+                  append( " associated: " ).append( ckpt_action );
+                throw new RuntimeException( error.toString() );
+            }
+            sb.append( "set +e" ).append( '\n' );//PM-701
+            sb.append( "job_ec=0" ).append( "\n" );
+
+            appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Executing the user task" );
+            sb.append( job.getRemoteExecutable() ).append( job.getArguments() ).append( '\n' );
+            //capture exitcode of the job
+            sb.append( "job_ec=$?" ).append( "\n" );
+            sb.append( "set -e" ).append( '\n' );//PM-701
+        } else {
+            sb.append( "set +e" ).append( '\n' );//PM-701
+            sb.append( "job_ec=0" ).append( "\n" );
+
+            appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Executing the user task" );
+            sb.append( job.getRemoteExecutable() ).append( job.getArguments() ).append( '\n' );
+            //capture exitcode of the job
+            sb.append( "job_ec=$?" ).append( "\n" );
+            sb.append( "set -e" ).append( '\n' );//PM-701
+        }
         sb.append( super.outputFilesToPegasusLite(job) );
         return sb.toString();
     }
