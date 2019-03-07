@@ -21,6 +21,8 @@ import edu.isi.pegasus.planner.classes.AggregatedJob;
 import edu.isi.pegasus.planner.classes.Job;
 import edu.isi.pegasus.planner.classes.PegasusBag;
 
+import edu.isi.pegasus.planner.namespace.Pegasus;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -54,14 +56,17 @@ public class None extends Abstract {
     public String wrap( Job job ){
         StringBuilder sb = new StringBuilder();
         String ckpt_style = (String)job.vdsNS.get( Pegasus.CHECKPOINT_STYLE_KEY );
+        System.err.println("Pegasus.CHECKPOINT_STYLE_KEY = " + ckpt_style);
 
         sb.append( super.inputFilesToPegasusLite(job) );
         sb.append( super.enableForIntegrity(job) );
 
-        if style.equalsIgnoreCase( Pegasus.CONDOR_STYLE ) {
+        if ( ckpt_style.equalsIgnoreCase( Pegasus.CONDOR_STYLE ) ) {
             //condor vanilla universe checkpointing
             String ckpt_signal = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY );
+            System.err.println("Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY= " + ckpt_signal);
             String ckpt_action = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY );
+            System.err.println("Pegasus.CHECKPOINT_CONDOR_ACTION_KEY = " + ckpt_action );
 
             job.condorVariables.construct( "+WantCheckpointSignal", "true" );
             job.condorVariables.construct( "+WantFTOnCheckpoint", "true" );
@@ -73,9 +78,9 @@ public class None extends Abstract {
             job.condorVariables.construct( "+SuccessCheckpointExitSignal", ckpt_signal );
 
             sb.append( "# Adding condor signal handler" ).append( '\n' );
-            if ckpt_action.style.equalsIgnoreCase( "wait_and_exit" ) {
+            if ( ckpt_action.equalsIgnoreCase( "wait_and_exit" ) ) {
                 sb.append( "# On signal wait and exit" ).append( '\n' );
-            } else if ckpt_action.style.equalsIgnoreCase( "stop_and_exit" ) {
+            } else if ( ckpt_action.equalsIgnoreCase( "stop_and_exit" ) ) {
                 sb.append( "# On signal stop and exit" ).append( '\n' );
             } else {
                 StringBuilder error = new StringBuilder();
