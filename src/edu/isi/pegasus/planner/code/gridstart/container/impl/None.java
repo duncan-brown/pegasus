@@ -56,7 +56,8 @@ public class None extends Abstract {
     public String wrap( Job job ){
         StringBuilder sb = new StringBuilder();
         String ckpt_style = (String)job.vdsNS.get( Pegasus.CHECKPOINT_STYLE_KEY );
-        System.err.println("Pegasus.CHECKPOINT_STYLE_KEY = " + ckpt_style);
+
+        ckpt_style = ( ckpt_style == null ) ? "none" : ckpt_style;
 
         sb.append( super.inputFilesToPegasusLite(job) );
         sb.append( super.enableForIntegrity(job) );
@@ -64,9 +65,20 @@ public class None extends Abstract {
         if ( ckpt_style.equalsIgnoreCase( Pegasus.CONDOR_STYLE ) ) {
             //condor vanilla universe checkpointing
             String ckpt_signal = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY );
-            System.err.println("Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY= " + ckpt_signal);
+            if ( ckpt_signal == null ) {
+                StringBuilder error = new StringBuilder();
+                error.append( Pegasus.CHECKPOINT_STYLE_KEY ).append( "=condor but" ).
+                  append( Pegasus.CHECKPOINT_CONDOR_SIGNAL_KEY ).append( " is not set.");
+                throw new RuntimeException( error.toString() );
+            }
+
             String ckpt_action = (String)job.vdsNS.get( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY );
-            System.err.println("Pegasus.CHECKPOINT_CONDOR_ACTION_KEY = " + ckpt_action );
+            if ( ckpt_signal == null ) {
+                StringBuilder error = new StringBuilder();
+                error.append( Pegasus.CHECKPOINT_STYLE_KEY ).append( "=condor but" ).
+                  append( Pegasus.CHECKPOINT_CONDOR_ACTION_KEY ).append( " is not set.");
+                throw new RuntimeException( error.toString() );
+            }
 
             job.condorVariables.construct( "+WantCheckpointSignal", "true" );
             job.condorVariables.construct( "+WantFTOnCheckpoint", "true" );
