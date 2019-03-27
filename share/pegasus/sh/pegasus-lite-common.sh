@@ -622,3 +622,15 @@ function pegasus_lite_get_system()
     return 1
 }
 
+function condor_ckpt_sig_stop_and_exit()
+{
+
+}
+
+function condor_ckpt_sig_wait_and_exit()
+{
+    kill -s ${ckpt_sig} ${ks_pid}
+    wait ${ks_pid}
+    rm -f _condor_ckpt_ks.pid
+    kill -s ${ckpt_sig} $$
+}

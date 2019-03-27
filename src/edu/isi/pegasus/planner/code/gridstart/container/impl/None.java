@@ -89,11 +89,11 @@ public class None extends Abstract {
             job.condorVariables.construct( "+CheckpointExitSignal", ckpt_signal );
             job.condorVariables.construct( "+SuccessCheckpointExitSignal", ckpt_signal );
 
-            sb.append( "# Adding condor signal handler" ).append( '\n' );
-            if ( ckpt_action.equalsIgnoreCase( "wait_and_exit" ) ) {
-                sb.append( "# On signal wait and exit" ).append( '\n' );
-            } else if ( ckpt_action.equalsIgnoreCase( "stop_and_exit" ) ) {
-                sb.append( "# On signal stop and exit" ).append( '\n' );
+            appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Adding condor checkpoint signal handler" );
+            if ( ckpt_action.equalsIgnoreCase( "wait_and_exit" ) ||
+                 ckpt_action.equalsIgnoreCase( "stop_and_exit" ) ) {
+                sb.append( "trap condor_ckpt_sig_" ).append( ckpt_action ).
+                append( " " ).append( ckpt_signal ).append( '\n' );
             } else {
                 StringBuilder error = new StringBuilder();
                 error.append( "Job " ).append( job.getID() ).
@@ -101,14 +101,34 @@ public class None extends Abstract {
                   append( " associated: " ).append( ckpt_action );
                 throw new RuntimeException( error.toString() );
             }
-            sb.append( "set +e" ).append( '\n' );//PM-701
+            
+            sb.append( "set +e" ).append( '\n' );
             sb.append( "job_ec=0" ).append( "\n" );
 
+            sb.append( "if [ ! -f _condor_ckpt_ks.pid ] ; then\n" );
+            // start the job, background, capture pid, and wait
             appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Executing the user task" );
-            sb.append( job.getRemoteExecutable() ).append( job.getArguments() ).append( '\n' );
-            //capture exitcode of the job
-            sb.append( "job_ec=$?" ).append( "\n" );
-            sb.append( "set -e" ).append( '\n' );//PM-701
+            sb.append( "  nohup " ).append( job.getRemoteExecutable() ).append( job.getArguments() ).
+              append( "1>>_condor_ckpt_ks.out 2>>_condor_ckpt_ks.err </dev/null &" ).append( '\n' );
+            sb.append( "  ks_pid=${!}" ).append( '\n' );
+            sb.append( "  echo ${ks_pid} > _condor_ckpt_ks.pid" ).append( '\n' );
+            sb.append( "  wait ${ks_pid}" ).append( '\n' );
+            sb.append( "  rm =f ks.pid ).append( '\n' );
+            sb.append( "  job_ec=$?" ).append( '\n' );
+            sb.append( "else" ).append( '\n' );
+            appendStderrFragment( sb, Abstract.PEGASUS_LITE_MESSAGE_PREFIX, "Resuming the user task" );
+            sb.append( "  ks_pid=$(cat _condor_ckpt_ks.pid)" ).append( '\n' );
+            sb.append( "  condor_ckpt_resume_" ).append( ckpt_action ).
+              append( " " ).append( ckpt_action ).append( '\n' );
+            sb.append( "fi" ).append( '\n' );
+
+            sb.append( "cat _condor_ckpt_ks.out" ).append( '\n' );
+            sb.append( "cat _condor_ckpt_ks.err" ).append( '\n' );
+            sb.append( "rm -f _condor_ckpt_ks.out" ).append( '\n' );
+            sb.append( "rm -f _condor_ckpt_ks.err" ).append( '\n' );
+            sb.append( "rm -f _condor_ckpt_ks.pid" ).append( '\n' );
+
+            sb.append( "set -e" ).append( '\n' );
         } else {
             sb.append( "set +e" ).append( '\n' );//PM-701
             sb.append( "job_ec=0" ).append( "\n" );
